@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Praia da Graciosa – Imersivo 360°</title>
+  <title>Galeria Imersiva 360° | VR Mode</title>
+  <!-- Bibliotecas Core -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <script src="https://unpkg.com/aframe-troika-text/dist/aframe-troika-text.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -14,392 +14,272 @@
     html, body {
       width: 100%; height: 100%;
       overflow: hidden;
-      background: #0a0c10;
+      background: #000;
       font-family: 'DM Sans', sans-serif;
     }
 
-    /* ── Correção do Botão VR do A-Frame ── */
-    /* Garante que o botão fique acima da UI e não seja coberto pelos cards */
+    /* ── CONFIGURAÇÃO DO BOTÃO VR (CRUCIAL) ── */
+    /* Posiciona o botão acima da interface de seleção de fotos */
     .a-enter-vr {
-      z-index: 9999 !important;
-      bottom: 130px !important; 
+      z-index: 10000 !important;
+      bottom: 140px !important; 
       right: 20px !important;
+      display: block !important;
+    }
+    .a-enter-vr-button {
+      background-color: rgba(0, 210, 255, 0.8) !important;
+      border-radius: 8px !important;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
     }
 
-    /* ── UI overlay ── */
+    /* UI Overlay */
     #ui {
       position: fixed;
       inset: 0;
       pointer-events: none;
       z-index: 10;
-    }
-
-    /* ── Header ── */
-    #header {
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 18px 28px 14px;
-      background: linear-gradient(to bottom, rgba(0,0,0,.72) 0%, transparent 100%);
-      pointer-events: none;
-    }
-    #header-title {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(1rem, 2.4vw, 1.45rem);
-      color: #FFCC00;
-      letter-spacing: .02em;
-      text-shadow: 0 2px 12px rgba(0,0,0,.8);
-    }
-    #header-subtitle {
-      font-size: .78rem;
-      color: rgba(255,255,255,.55);
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      margin-top: 2px;
-    }
-    #scene-badge {
-      font-size: .72rem;
-      font-weight: 500;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      color: #FFCC00;
-      border: 1px solid rgba(255,204,0,.45);
-      border-radius: 20px;
-      padding: 5px 14px;
-      background: rgba(0,0,0,.4);
-      backdrop-filter: blur(6px);
-      transition: opacity .3s;
-    }
-
-    /* ── Scene selector ── */
-    #scene-selector {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      padding: 0 20px 28px;
-      background: linear-gradient(to top, rgba(0,0,0,.78) 0%, transparent 100%);
       display: flex;
       flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Cabeçalho */
+    #header {
+      padding: 20px 30px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, transparent 100%);
+      display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 10px;
+    }
+    #header-info h1 {
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    #scene-counter {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      padding: 8px 18px;
+      border-radius: 30px;
+      color: #00d2ff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: 1px solid rgba(0, 210, 255, 0.3);
+    }
+
+    /* Seletor de Cenas Inferior */
+    #scene-selector {
+      background: linear-gradient(to top, rgba(0,0,0,0.9) 30%, transparent 100%);
+      padding: 20px 0 40px;
       pointer-events: all;
     }
-    #selector-label {
-      font-size: .68rem;
-      letter-spacing: .18em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,.4);
-    }
-    #cards {
+    
+    #cards-container {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       overflow-x: auto;
-      padding-bottom: 4px;
-      scrollbar-width: none;
-      max-width: 820px;
-      width: 100%;
-      justify-content: center;
+      padding: 10px 30px;
+      scrollbar-width: none; 
+      max-width: 1400px;
+      margin: 0 auto;
+      -webkit-overflow-scrolling: touch;
     }
-    #cards::-webkit-scrollbar { display: none; }
+    
+    #cards-container::-webkit-scrollbar {
+      display: none;
+    }
 
     .scene-card {
       flex: 0 0 auto;
-      width: 140px;
-      background: rgba(255,255,255,.07);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 12px;
-      padding: 12px 10px 10px;
-      cursor: pointer;
-      transition: border-color .25s, background .25s, transform .2s;
+      width: 65px;
+      height: 65px;
+      background: rgba(255,255,255,0.05);
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 50%;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 6px;
-      backdrop-filter: blur(8px);
-    }
-    .scene-card:hover {
-      border-color: rgba(255,204,0,.5);
-      background: rgba(255,204,0,.08);
-      transform: translateY(-3px);
-    }
-    .scene-card.active {
-      border-color: #FFCC00;
-      background: rgba(255,204,0,.14);
-    }
-    .scene-card .icon {
-      font-size: 1.6rem;
-      line-height: 1;
-    }
-    .scene-card .card-name {
-      font-size: .72rem;
-      font-weight: 500;
-      color: #fff;
-      text-align: center;
-      line-height: 1.3;
-    }
-    .scene-card .card-sub {
-      font-size: .62rem;
-      color: rgba(255,255,255,.4);
-      text-align: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
     }
 
-    /* ── Loading overlay ── */
+    .scene-card span {
+      color: #fff;
+      font-weight: 500;
+      font-size: 1.1rem;
+    }
+
+    .scene-card:hover {
+      border-color: #00d2ff;
+      transform: scale(1.1);
+      background: rgba(0, 210, 255, 0.1);
+    }
+
+    .scene-card.active {
+      border-color: #00d2ff;
+      background: #00d2ff;
+      box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
+    }
+    
+    .scene-card.active span {
+      color: #000;
+      font-weight: 700;
+    }
+
+    /* Carregamento */
     #loading {
       position: fixed;
       inset: 0;
-      background: #0a0c10;
+      background: #0a0a0a;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 100;
-      gap: 16px;
-      transition: opacity .5s;
+      z-index: 1000;
+      transition: opacity 0.6s ease;
     }
     #loading.hidden { opacity: 0; pointer-events: none; }
-    .loader-ring {
-      width: 52px; height: 52px;
-      border: 3px solid rgba(255,204,0,.15);
-      border-top-color: #FFCC00;
+    
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid rgba(0, 210, 255, 0.1);
+      border-top-color: #00d2ff;
       border-radius: 50%;
-      animation: spin .9s linear infinite;
+      animation: spin 1s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .loader-text {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.1rem;
-      color: rgba(255,255,255,.6);
-      letter-spacing: .06em;
-    }
 
-    /* ── Transition flash ── */
     #flash {
       position: fixed;
       inset: 0;
-      background: #0a0c10;
+      background: #000;
       opacity: 0;
       pointer-events: none;
-      z-index: 9;
-      transition: opacity .22s;
+      z-index: 99;
+      transition: opacity 0.3s ease;
     }
-    #flash.show { opacity: 1; }
-
-    /* ── VR hint ── */
-    #vr-hint {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: .66rem;
-      letter-spacing: .15em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,.25);
-      pointer-events: none;
-      animation: fadeHint 3s ease forwards;
-    }
-    @keyframes fadeHint {
-      0%   { opacity: 0; }
-      20%  { opacity: 1; }
-      80%  { opacity: 1; }
-      100% { opacity: 0; }
-    }
+    #flash.active { opacity: 1; }
   </style>
 </head>
 <body>
 
 <div id="loading">
-  <div class="loader-ring"></div>
-  <div class="loader-text">Carregando experiência…</div>
+  <div class="spinner"></div>
+  <p style="color: #00d2ff; margin-top: 25px; font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase;">Acessando Experiência 360°...</p>
 </div>
 
 <div id="flash"></div>
 
-<a-scene id="scene" vr-mode-ui="enabled: true" embedded style="position:fixed;inset:0;">
-
-  <a-assets timeout="30000">
-    <img id="sky0" src="assets/images/orla.jpg" crossorigin="anonymous">
-    <img id="sky1" src="assets/images/monumento.jpg" crossorigin="anonymous">
-    <img id="sky2" src="assets/images/ponte.jpg" crossorigin="anonymous">
-    <img id="sky3" src="assets/images/pordosol.jpg" crossorigin="anonymous">
+<!-- vr-mode-ui habilita o botão de VR no canto inferior direito -->
+<a-scene id="main-scene" 
+         vr-mode-ui="enabled: true" 
+         embedded 
+         style="position:fixed; inset:0;" 
+         renderer="antialias: true; colorManagement: true;">
+  
+  <a-assets id="assets-manager">
+    <!-- Imagens carregadas dinamicamente -->
   </a-assets>
 
-  <a-sky id="main-sky" src="#sky0" rotation="0 -130 0" crossorigin="anonymous"></a-sky>
+  <!-- Skybox com rotação automática suave que pausa ao interagir -->
+  <a-sky id="skybox" 
+         src="" 
+         rotation="0 -90 0" 
+         animation="property: rotation; to: 0 270 0; dur: 120000; easing: linear; loop: true; pauseEvents: mousedown; resumeEvents: mouseup">
+  </a-sky>
 
-  <a-entity id="scene-0" visible="true">
-    <a-troika-text value="Praia da Graciosa – Palmas, TO"
-      color="#00DFFF" align="center" font-size="0.34" anchor="center"
-      position="0 2.5 -4" outline-color="#003344" outline-width="3%">
-    </a-troika-text>
-
-    <a-entity position="0 1.2 -4" rotation="0 0 0">
-      <a-entity geometry="primitive: plane; width: 3.5; height: 1.9"
-        material="color: #002233; opacity: 0.88; transparent: true;"></a-entity>
-      <a-troika-text value="A Orla da Graciosa"
-        color="#00DFFF" align="center" font-size="0.17" anchor="center"
-        position="0 0.65 0.11"></a-troika-text>
-      <a-troika-text
-        value="Principal cartão-postal de Palmas, a Praia da Graciosa tem 520 metros de orla às margens do Lago de Palmas. O lago foi formado pela Usina Hidrelétrica Luís Eduardo Magalhães, sobre o Rio Tocantins."
-        color="#EFEFEF" align="center" font-size="0.105" anchor="center"
-        max-width="3.1" position="0 0.05 0.11"></a-troika-text>
-      <a-troika-text value="🏖  Acesso pela Av. Juscelino Kubitschek, sentido oeste"
-        color="#00DFFF" align="center" font-size="0.09" anchor="center"
-        position="0 -0.65 0.11"></a-troika-text>
+  <a-camera look-controls="reverseMouseDrag: false; touchEnabled: true" wasd-controls="enabled: false">
+    <!-- Cursor para interação quando estiver em modo VR -->
+    <a-entity cursor="fuse: true; fuseTimeout: 1500"
+              position="0 0 -1"
+              geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
+              material="color: #00d2ff; shader: flat; opacity: 0.5"
+              raycaster="objects: .clickable">
     </a-entity>
-  </a-entity>
-
-  <a-entity id="scene-1" visible="false">
-    <a-troika-text value="Monumento à Consciência"
-      color="#FFD700" align="center" font-size="0.32" anchor="center"
-      position="0 2.5 -4" outline-color="#2a1a00" outline-width="3%">
-    </a-troika-text>
-
-    <a-entity position="0 1.2 -4" rotation="0 0 0">
-      <a-entity geometry="primitive: plane; width: 3.5; height: 2"
-        material="color: #1a1000; opacity: 0.88; transparent: true;"></a-entity>
-      <a-troika-text value="O Obelisco da Graciosa"
-        color="#FFD700" align="center" font-size="0.17" anchor="center"
-        position="0 0.72 0.11"></a-troika-text>
-      <a-troika-text
-        value="Na orla da Graciosa ergue-se um obelisco de 12,38 metros de altura com quatro faces. Cada face traz uma obra artística ligada a elementos da natureza: Consciência, Homem, Água e Terra, Vento e Fogo."
-        color="#EFEFEF" align="center" font-size="0.105" anchor="center"
-        max-width="3.1" position="0 0.1 0.11"></a-troika-text>
-      <a-troika-text value="📐  Altura: 12,38 m  |  Formato: obelisco de quatro faces"
-        color="#FFD700" align="center" font-size="0.09" anchor="center"
-        position="0 -0.72 0.11"></a-troika-text>
-    </a-entity>
-  </a-entity>
-
-  <a-entity id="scene-2" visible="false">
-    <a-troika-text value="Ponte Siqueira Campos"
-      color="#7FFFB0" align="center" font-size="0.32" anchor="center"
-      position="0 2.5 -4" outline-color="#002211" outline-width="3%">
-    </a-troika-text>
-
-    <a-entity position="0 1.2 -4" rotation="0 0 0">
-      <a-entity geometry="primitive: plane; width: 3.5; height: 2"
-        material="color: #001a10; opacity: 0.88; transparent: true;"></a-entity>
-      <a-troika-text value="A Ponte Vista da Graciosa"
-        color="#7FFFB0" align="center" font-size="0.17" anchor="center"
-        position="0 0.72 0.11"></a-troika-text>
-      <a-troika-text
-        value="Visível da Praia da Graciosa, a Ponte Governador Siqueira Campos (também chamada Ponte da Amizade e Integração Nacional) liga Palmas ao distrito de Luzimangues sobre o Rio Tocantins, na rodovia TO-080."
-        color="#EFEFEF" align="center" font-size="0.105" anchor="center"
-        max-width="3.1" position="0 0.1 0.11"></a-troika-text>
-      <a-troika-text value="🌉  Custo: R$ 146 milhões  |  Formato: causeway"
-        color="#7FFFB0" align="center" font-size="0.09" anchor="center"
-        position="0 -0.72 0.11"></a-troika-text>
-    </a-entity>
-  </a-entity>
-
-  <a-entity id="scene-3" visible="false">
-    <a-troika-text value="Lago de Palmas ao Entardecer"
-      color="#FF9A3C" align="center" font-size="0.30" anchor="center"
-      position="0 2.5 -4" outline-color="#2a0a00" outline-width="3%">
-    </a-troika-text>
-
-    <a-entity position="0 1.2 -4" rotation="0 0 0">
-      <a-entity geometry="primitive: plane; width: 3.5; height: 2"
-        material="color: #1c0a00; opacity: 0.88; transparent: true;"></a-entity>
-      <a-troika-text value="O Melhor Pôr do Sol de Palmas"
-        color="#FF9A3C" align="center" font-size="0.17" anchor="center"
-        position="0 0.72 0.11"></a-troika-text>
-      <a-troika-text
-        value="A Praia da Graciosa é famosa pelo pôr do sol sobre o Lago de Palmas. O espelho d'água reflete as cores do céu e a silhueta da Ponte Siqueira Campos ao fundo, criando um dos panoramas mais fotografados do Tocantins."
-        color="#EFEFEF" align="center" font-size="0.105" anchor="center"
-        max-width="3.1" position="0 0.1 0.11"></a-troika-text>
-      <a-troika-text value="🌅  Melhor época: maio a setembro (estação seca)"
-        color="#FF9A3C" align="center" font-size="0.09" anchor="center"
-        position="0 -0.72 0.11"></a-troika-text>
-    </a-entity>
-  </a-entity>
-
-  <a-camera look-controls="reverseMouseDrag: false" wasd-controls="enabled: false"></a-camera>
+  </a-camera>
 </a-scene>
 
 <div id="ui">
   <div id="header">
-    <div>
-      <div id="header-title">Praia da Graciosa</div>
-      <div id="header-subtitle">Palmas, Tocantins · Experiência 360°</div>
+    <div id="header-info">
+      <h1>Imersão VR</h1>
     </div>
-    <div id="scene-badge">Vista 1 / 4</div>
+    <div id="scene-counter">Foto 1 / 48</div>
   </div>
 
-  <div id="vr-hint">Arraste para explorar a cena 360°</div>
-
   <div id="scene-selector">
-    <div id="selector-label">Escolha uma cena</div>
-    <div id="cards">
-      <div class="scene-card active" data-scene="0" onclick="switchScene(0)">
-        <div class="icon">🏖</div>
-        <div class="card-name">Orla da Graciosa</div>
-        <div class="card-sub">Praia do Lago</div>
-      </div>
-      <div class="scene-card" data-scene="1" onclick="switchScene(1)">
-        <div class="icon">🗿</div>
-        <div class="card-name">Monumento à Consciência</div>
-        <div class="card-sub">Obelisco 4 faces</div>
-      </div>
-      <div class="scene-card" data-scene="2" onclick="switchScene(2)">
-        <div class="icon">🌉</div>
-        <div class="card-name">Ponte Siqueira Campos</div>
-        <div class="card-sub">Curiosidades</div>
-      </div>
-      <div class="scene-card" data-scene="3" onclick="switchScene(3)">
-        <div class="icon">🌅</div>
-        <div class="card-name">Pôr do Sol no Lago</div>
-        <div class="card-sub">Ilha e Flutuantes</div>
-      </div>
+    <div id="cards-container">
+      <!-- Botões gerados via JS -->
     </div>
   </div>
 </div>
 
 <script>
-  const scenes = [
-    { skyId: '#sky0', rotation: '0 -130 0', badge: 'Vista 1 / 4' },
-    { skyId: '#sky1', rotation: '0  -90 0', badge: 'Vista 2 / 4' },
-    { skyId: '#sky2', rotation: '0  -50 0', badge: 'Vista 3 / 4' },
-    { skyId: '#sky3', rotation: '0  160 0', badge: 'Vista 4 / 4' },
-  ];
-
-  let current = 0;
-  let transitioning = false;
-
-  const flash   = document.getElementById('flash');
-  const badge   = document.getElementById('scene-badge');
+  const totalImages = 48;
+  const imagePath = './assets/images/'; 
+  
+  const container = document.getElementById('cards-container');
+  const skybox = document.getElementById('skybox');
+  const counter = document.getElementById('scene-counter');
+  const flash = document.getElementById('flash');
   const loading = document.getElementById('loading');
+  
+  let currentScene = 1;
+  let isTransitioning = false;
 
-  document.querySelector('a-scene').addEventListener('loaded', () => {
-    setTimeout(() => loading.classList.add('hidden'), 600);
-  });
+  function initGallery() {
+    for (let i = 1; i <= totalImages; i++) {
+      const card = document.createElement('div');
+      card.className = `scene-card ${i === 1 ? 'active' : ''}`;
+      card.dataset.id = i;
+      card.innerHTML = `<span>${i}</span>`;
+      card.onclick = () => switchScene(i);
+      container.appendChild(card);
+    }
+  }
 
-  function switchScene(index) {
-    if (index === current || transitioning) return;
-    transitioning = true;
-
-    flash.classList.add('show');
+  function switchScene(id) {
+    if (id === currentScene || isTransitioning) return;
+    
+    isTransitioning = true;
+    currentScene = id;
+    flash.classList.add('active');
 
     setTimeout(() => {
-      for (let i = 0; i < 4; i++) {
-        document.getElementById('scene-' + i).setAttribute('visible', 'false');
-      }
-      document.getElementById('scene-' + index).setAttribute('visible', 'true');
+      // Caminho relativo para GitHub Pages
+      const newImgUrl = `${imagePath}${id}.jpg`;
+      skybox.setAttribute('src', newImgUrl);
+      
+      counter.textContent = `Foto ${id} / ${totalImages}`;
+      
+      document.querySelectorAll('.scene-card').forEach(c => {
+        c.classList.toggle('active', parseInt(c.dataset.id) === id);
+      });
 
-      const sky = document.getElementById('main-sky');
-      sky.setAttribute('src', scenes[index].skyId);
-      sky.setAttribute('rotation', scenes[index].rotation);
+      const activeBtn = document.querySelector('.scene-card.active');
+      activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 
-      badge.textContent = scenes[index].badge;
-
-      document.querySelectorAll('.scene-card').forEach(c => c.classList.remove('active'));
-      document.querySelector('[data-scene="' + index + '"]').classList.add('active');
-
-      current = index;
-      flash.classList.remove('show');
-      transitioning = false;
-    }, 240);
+      setTimeout(() => {
+        flash.classList.remove('active');
+        isTransitioning = false;
+      }, 300);
+    }, 300);
   }
+
+  window.onload = () => {
+    initGallery();
+    skybox.setAttribute('src', `${imagePath}1.jpg`);
+
+    document.querySelector('a-scene').addEventListener('loaded', () => {
+      setTimeout(() => {
+        loading.classList.add('hidden');
+      }, 1000);
+    });
+  };
 </script>
 
 </body>
